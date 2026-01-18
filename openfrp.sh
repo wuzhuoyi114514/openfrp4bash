@@ -6,16 +6,21 @@ echo ' \___/| .__/ \___|_| |_|_| |_|  | .__/ '
 echo '  |_|                       |_|    '
 echo 'openfrp command program'
 
+if [ -e authorization.txt ]
+then
+login=$(cat authorization.txt)
+else
 python oflogin.py
 login=$(cat authorization.txt)
 #read -s -p 'openfrp Authorization:' login
 curl -X POST https://api.openfrp.net/frp/api/getUserInfo \
          -H "Authorization: $login "
+fi
 
 echo
 while :
 do
-read -p "of-cmd-0.01$" put
+read -p "of-cmd-0.02$" put
 case $put in
 add) echo add tunnal
 read -p "nodeid" id
@@ -62,6 +67,13 @@ curl -X POST "https://api.openfrp.net/frp/api/removeProxy" \
   -H "Authorization: $login" \
   -d "{\"proxy_id\": \"$id\"}"
 
+echo
+;;
+login)
+python oflogin.py
+login=$(cat authorization.txt)
+curl -X POST https://api.openfrp.net/frp/api/getUserInfo \
+         -H "Authorization: $login "
 echo
 ;;
 help) echo "add 添加节点 exit 退出 list 获取所有节点 ulist 获取用户节点 remove 删除节点"
