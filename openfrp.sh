@@ -18,6 +18,7 @@ do
 read -p "of-cmd-0.01$" put
 case $put in
 add) echo add tunnal
+read -p "nodeid" id
 read -p "name" name
 read -p "type" type
 read -p "localaddr" local
@@ -35,7 +36,7 @@ curl -X POST https://api.openfrp.net/frp/api/newProxy \
   \"local_port\": $lport,
   \"custom\": \"\",
   \"name\": \"$name\",
-  \"node_id\": 26,
+  \"node_id\": \"$id\",
   \"remote_port\": $rport,
   \"type\": \"$type\",
   \"autoTls\": false,
