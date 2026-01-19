@@ -13,7 +13,7 @@ POLL_LOGIN_URL = "https://access.openfrp.net/argoAccess/pollLogin"
 
 POLL_INTERVAL = 5          # 每 5 秒轮询一次
 MAX_DURATION = 300         # 5 分钟超时
-AUTH_FILE = "authorization.txt"  # 保存 Authorization 的文件
+AUTH_FILE = ".authorization"  # 保存 Authorization 的文件
 
 # =========================
 # 生成 Curve25519 密钥对
@@ -34,7 +34,7 @@ def generate_keypair():
 # =========================
 def request_login(public_key_b64):
     body = {"public_key": public_key_b64}
-    print("[DEBUG] POST body:", body)
+    print("[DEBUG] POST 内容:", body)
 
     resp = requests.post(
         REQUEST_LOGIN_URL,
@@ -43,8 +43,8 @@ def request_login(public_key_b64):
     )
 
     if resp.status_code != 200:
-        print("[ERROR] Response status:", resp.status_code)
-        print("[ERROR] Response body:", resp.text)
+        print("[ERROR] 回复代码:", resp.status_code)
+        print("[ERROR] 回复内容:", resp.text)
         resp.raise_for_status()
 
     data = resp.json()
@@ -90,11 +90,11 @@ def poll_login(client_private_key, request_uuid):
         if resp.status_code == 400:
             print("[ERROR] 400 Bad Request - request_uuid may be expired or wrong format")
             print(resp.text)
-            raise RuntimeError("PollLogin failed: 400 Bad Request")
+            raise RuntimeError("失败: 400 Bad Request")
 
         # 空响应直接继续轮询
         if not resp.text.strip():
-            print("[INFO] Empty response, continue polling...")
+            print("[INFO] 等待认证中")
             time.sleep(POLL_INTERVAL)
             continue
 
@@ -102,7 +102,7 @@ def poll_login(client_private_key, request_uuid):
         try:
             data = resp.json()
         except Exception:
-            print("[WARNING] Failed to parse JSON, response:")
+            print("[WARNING] 无效的json 以下为内容:")
             print(resp.text)
             time.sleep(POLL_INTERVAL)
             continue
@@ -135,26 +135,29 @@ def save_authorization_to_file(authorization, filename=AUTH_FILE):
         os.chmod(filename, 0o600)
     except Exception:
         pass  # Windows 不支持 chmod，不影响
-    print(f"[✓] Authorization saved to {filename}")
+    print(f"[✓] Authorization 以保存到 {filename}")
 
 # =========================
 # 主流程
 # =========================
 def main():
-    print("[*] Generating Curve25519 keypair...")
+    print("[*] 生成 Curve25519 密钥...")
     client_private_key, client_public_key_b64 = generate_keypair()
 
-    print("[*] Requesting login authorization...")
+    print("[*] 开始请求登录...")
     auth_url, request_uuid = request_login(client_public_key_b64)
 
-    print("[!] Please open the following URL in browser to authorize:")
+    print("===========================================请登录========================================")
+    print("[!] 请使用浏览器打开以下URL进行登录")
     print(auth_url)
-    print("[*] Waiting for user authorization...")
+    print("===========================================请登录========================================")
+    print("[*] 等待认证中.....")
 
     authorization = poll_login(client_private_key, request_uuid)
 
-    print("[✓] Authorization obtained:")
+    print("[✓] 认证完成 密钥为")
     print(authorization)
+    print("请妥善保管")
 
     # 保存到文件
     save_authorization_to_file(authorization)
