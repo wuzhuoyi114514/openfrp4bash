@@ -10,7 +10,7 @@ echo 'openfrp command program     version 0.02 for x86_64'
 if [ -e .authorization ]
 then
 login=$(cat .authorization)
-echo automantic logind
+echo automantic logged in
 curl -s -X POST https://api.openfrp.net/frp/api/getUserInfo \
          -H "Authorization: $login " | jq
 else
