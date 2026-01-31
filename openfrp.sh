@@ -32,10 +32,15 @@ read -p "名字:" name
 read -p "类型:" type
 read -p "本地地址:" local
 read -p "本地端口:" lport
+if [[ "$type" == "http" || "$type" = "https" ]]
+then
+read -p "绑定域名? " bind
+fi
 read -p "远程端口:" rport
 read -p "高级功能(yes / No)?:" adv
 if [[ "$adv" == "yes" || "$adv" == "y" ]]
 then
+read -p "强制https?(true or false):" fhttps
 read -p "数据加密(true or false):" datae
 read -p "数据压缩(true or false):" datag
 read -p "自动TLS?(true or false):" atls
@@ -45,15 +50,22 @@ datae=false
 datag=false
 atls=false
 proxypro=false
+fhttps=false
 fi
 echo
+
+
+# 1. 先转成数组 
+# 2. 再通过 @json 将数组序列化为带转义的字符串
+final_format=$(jq -n --arg b "$bind" '[$b] | @json')
+
 curl -s -X POST https://api.openfrp.net/frp/api/newProxy \
--H "Authorization: a2d2a2e96dd843129723d1fba208f493YJHKMDLHNTETNJNKYI0ZMWFH" \
+-H "Authorization: $login " \
 -H "Content-Type: application/json" \
 -d "{
   \"dataEncrypt\": \"$datae\",
   \"dataGzip\": \"$datag\",
-  \"domain_bind\": \"\",
+  \"domain_bind\":"$final_format",
   \"local_addr\": \"$local\",
   \"local_port\": $lport,
   \"custom\": \"\",
@@ -62,9 +74,9 @@ curl -s -X POST https://api.openfrp.net/frp/api/newProxy \
   \"remote_port\": $rport,
   \"type\": \"$type\",
   \"autoTls\": \"$atls\",
-  \"forceHttps\": false,
+  \"forceHttps\": $fhttps,
   \"proxyProtocolVersion\": \"$proxypro\"
-}" | jq -r .msg
+}" |  jq -r .msg
 echo
 ;;
 list)
@@ -93,7 +105,7 @@ curl -s -X POST https://api.openfrp.net/frp/api/getUserInfo \
          -H "Authorization: $login " | 
 echo
 ;;
-help) echo "add 添加节点 exit 退出 list 获取所有节点 ulist 获取用户节点 remove 删除节点 login 重新登录 start 启动节点"
+help) echo "add 添加节点 exit 退出 list 获取所有节点 ulist 获取用户节点 remove 删除节点 login 重新登录 start 启动节点 edit 编辑隧道"
 ;;
 "") continue
 ;;
@@ -120,7 +132,9 @@ fi
   -H "Authorization: $(tr -d '\n\r ' < .authorization)")&&echo "$resp" | jq -r '.data.token')
 read -p "需要启动的节点ID?" startid
 ./frpc_linux_amd64 -u $token -p $startid -n
-
+;;
+edit)
+echo 还没做
 ;;
 exit) exit
 ;;
