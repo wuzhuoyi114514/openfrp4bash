@@ -26,7 +26,7 @@ while :
 do
 read -p "of-cmd-0.02$ " put
 case $put in
-add) echo add tunnal
+add) echo 添加隧道
 read -p "节点ID?:" id
 read -p "名字:" name
 read -p "类型:" type
@@ -134,11 +134,62 @@ read -p "需要启动的节点ID?" startid
 ./frpc_linux_amd64 -u $token -p $startid -n
 ;;
 edit)
-echo 还没做
+    read -p "请输入要修改的隧道 ID (proxy_id): " proxy_id
+    if [ -z "$proxy_id" ]; then echo "ID 不能为空"; continue; fi
+
+    # 询问修改项，逻辑基本复用 add
+    read -p "新节点ID : " id
+    read -p "新名字: " name
+    read -p "新类型 (tcp/udp/http/https): " type
+    read -p "新本地地址: " local
+    read -p "新本地端口: " lport
+    
+    bind=""
+    if [[ "$type" == "http" || "$type" == "https" ]]; then
+        read -p "新绑定域名: " bind
+    fi
+    read -p "新远程端口: " rport
+    
+    read -p "修改高级功能? (y/N): " adv
+    if [[ "$adv" == "y" ]]; then
+        read -p "强制https?(true/false): " fhttps
+        read -p "数据加密(true/false): " datae
+        read -p "数据压缩(true/false): " datag
+        read -p "自动TLS?(true/false): " atls
+        read -p "Proxy Protocol V2(true/false): " proxypro
+    else
+        # 默认值或保持常用设置
+        datae=false; datag=false; atls="false"; proxypro=false; fhttps=false
+    fi
+
+    # 处理域名 JSON 格式
+    final_format=$(jq -n --arg b "$bind" '[$b] | @json')
+
+    echo "正在提交修改..."
+    curl -s -X POST https://api.openfrp.net/frp/api/editProxy \
+    -H "Authorization: $login" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"proxy_id\": $proxy_id,
+      \"node_id\": ${id:-0},
+      \"name\": \"$name\",
+      \"type\": \"$type\",
+      \"local_addr\": \"$local\",
+      \"local_port\": ${lport:-0},
+      \"remote_port\": ${rport:-0},
+      \"domain_bind\": $final_format,
+      \"dataEncrypt\": $datae,
+      \"dataGzip\": $datag,
+      \"autoTls\": \"$atls\",
+      \"forceHttps\": $fhttps,
+      \"proxyProtocolVersion\": $proxypro,
+      \"custom\": \"\"
+    }" | jq -r .msg
+    echo
 ;;
 exit) exit
 ;;
-*) echo "未知命令"
+*) echo 未知命令
 ;;
 esac
 done
