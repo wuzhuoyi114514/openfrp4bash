@@ -137,10 +137,16 @@ edit)
     read -p "请输入要修改的隧道 ID (proxy_id): " proxy_id
     if [ -z "$proxy_id" ]; then echo "ID 不能为空"; continue; fi
 
+    rport=$(curl -s -X POST "https://api.openfrp.net/frp/api/getUserProxies" -H "Authorization: $login " | sed -n 's/.*"remotePort":[[:space:]]*\([0-9]\+\).*/\1/p')
+    type=$(curl -s -X POST "https://api.openfrp.net/frp/api/getUserProxies" -H "Authorization: $login " | sed -n 's/.*"proxyType":[[:space:]]*"\([^"]*\)".*/\1/p')
+    id=$(curl -s -X POST "https://api.openfrp.net/frp/api/getUserProxies" -H "Authorization: $login " | sed -n 's/.*"nid":[[:space:]]*\([0-9]\+\).*/\1/p')
+
     # 询问修改项，逻辑基本复用 add
-    read -p "新节点ID : " id
+    #read -p "新节点ID(写了也没用) : " id
+    #id=29
     read -p "新名字: " name
-    read -p "新类型 (tcp/udp/http/https): " type
+    #read -p "新类型 (tcp/udp/http/https)(写了也没用): " type
+    #type=tcp
     read -p "新本地地址: " local
     read -p "新本地端口: " lport
     
@@ -148,7 +154,7 @@ edit)
     if [[ "$type" == "http" || "$type" == "https" ]]; then
         read -p "新绑定域名: " bind
     fi
-    read -p "新远程端口: " rport
+    #read -p "新远程端口: " rport
     
     read -p "修改高级功能? (y/N): " adv
     if [[ "$adv" == "y" ]]; then
