@@ -100,7 +100,7 @@ echo
 ;;
 login)
 python oflogin.py
-login=$(cat authorization.txt)
+login=$(cat .authorization)
 curl -s -X POST https://api.openfrp.net/frp/api/getUserInfo \
          -H "Authorization: $login " | 
 echo
