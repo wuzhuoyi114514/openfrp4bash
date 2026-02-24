@@ -12,13 +12,13 @@ then
 login=$(cat .authorization)
 echo automantic logged in
 curl -s -X POST https://api.openfrp.net/frp/api/getUserInfo \
-         -H "Authorization: $login " | jq
+         -H "Authorization: $login " | jq .data
 else
-python oflogin.py
+bash oflogin.sh
 login=$(cat .authorization)
 #read -s -p 'openfrp Authorization:' login
 curl -s -X POST https://api.openfrp.net/frp/api/getUserInfo \
-         -H "Authorization: $login " | jq
+         -H "Authorization: $login " | jq .data
 fi
 
 echo
@@ -99,7 +99,7 @@ curl -s -X POST "https://api.openfrp.net/frp/api/removeProxy" \
 echo
 ;;
 login)
-python oflogin.py
+bash oflogin.sh
 login=$(cat .authorization)
 curl -s -X POST https://api.openfrp.net/frp/api/getUserInfo \
          -H "Authorization: $login " | 
