@@ -9,6 +9,9 @@ AUTH_FILE=".authorization"
 POLL_INTERVAL=5
 MAX_DURATION=300
 
+# 生成密钥
+python3 generate_keys.py
+
 # 从生成的 Pem 文件中提取密钥字符串 (假设文件里只有 Base64 字符串)
 # 如果你的 pem 文件包含 -----BEGIN...----- 标签，请手动提取中间的字符串
 CLIENT_PRIVATE_KEY=$(cat private_key.pem)
@@ -105,3 +108,7 @@ print(box.decrypt(encrypted_bytes).decode())
     echo "------------------------------------------------------------"
     break
 done
+
+# 清理
+rm public_key.pem
+rm private_key.pem
