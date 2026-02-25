@@ -33,7 +33,7 @@ show_api_msg() {
 # 2. 功能核心
 # =========================
 
-# [功能] 账号详细信息 (对标你提供的所有 API 字段)
+# [功能] 账号详细
 show_full_info() {
     local resp=$(curl -s -X POST "$API_BASE/getUserInfo" -H "Authorization: $login")
     local info=$(echo "$resp" | jq -r '.data | "
@@ -210,6 +210,24 @@ if [ -z "$list" ]; then
         whiptail --title "提示" --msgbox "当前账户下没有隧道，请先新建隧道后再执行删除操作。" 10 50
         continue
     fi
+    latest=$(curl -s -X GET 'https://api.openfrp.net/commonQuery/get?key=software' | jq -r .data.latest_full)
+if [ -e frpc_linux_amd64 ]; then
+    echo 进行检查更新
+    frpc_ver=$(./frpc_linux_amd64 -v)
+   if [ $frpc_ver == $latest ]
+then
+echo 版本是最新的
+else
+echo 版本不是最新的 更新中...
+   wget -O frpc.tar.gz -q https://staticassets.naids.com/client/$latest/frpc_linux_amd64.tar.gz
+    tar -xvf frpc.tar.gz
+fi
+else
+    echo "你必须下载openfrp的frpc客户端才可以启动"
+    echo "现在下载...."
+    wget -O frpc.tar.gz -q https://staticassets.naids.com/client/$latest/frpc_linux_amd64.tar.gz
+    tar -xvf frpc.tar.gz
+fi
             [ -n "$list" ] && {
                 pid=$(eval "whiptail --menu '运行隧道' 20 60 10 $list 3>&1 1>&2 2>&3")
                 [ -n "$pid" ] && {
