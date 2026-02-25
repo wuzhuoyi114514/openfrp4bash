@@ -105,7 +105,10 @@ local NODE_LIST=()
     local l_addr=$(whiptail --inputbox "本地地址:" 8 45 "127.0.0.1" 3>&1 1>&2 2>&3)
     local l_port=$(whiptail --inputbox "本地端口:" 8 45 "80" 3>&1 1>&2 2>&3)
     local r_port=$(whiptail --inputbox "远程端口 (0随机):" 8 45 "0" 3>&1 1>&2 2>&3)
-    
+    if [ $r_port == 0 ] ; then
+    rand=$(( (RANDOM << 15 | RANDOM) % 65535 + 1 ))
+r_port=$rand
+fi
     local bind=""
     [[ "$type" == "http" || "$type" == "https" ]] && bind=$(whiptail --inputbox "绑定域名:" 8 45 "" 3>&1 1>&2 2>&3)
     
