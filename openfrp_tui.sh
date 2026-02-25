@@ -6,6 +6,8 @@
 AUTH_FILE=".authorization"
 API_BASE="https://api.openfrp.net/frp/api"
 TMP_DATA="/tmp/of_scroll.txt"
+CACHE_NODES="/tmp/of_nodes.json"
+CACHE_PROXIES="/tmp/of_proxies.json"
 
 # 解决 TUI 渲染与颜色
 export TERM=xterm
@@ -64,9 +66,39 @@ scroll_view() {
     rm -f "$TMP_DATA"
 }
 
+# 获取节点菜单数据
+get_node_menu() {
+    # 1. 检查缓存，若为空则抓取
+    if [ ! -s "$CACHE_NODES" ]; then
+        curl -s -X POST "$API_BASE/getNodeList" -H "Authorization: $login" > "$CACHE_NODES"
+    fi
+
+    # 2. 这里的输出不要重定向到 /dev/null，而是直接打印出来供外部捕获
+    # 格式：ID 名称 (ID 是 Tag，名称是 Item)
+        jq -r '.data.list[] | [ .id, "\(.name) [\(.hostname)]" ] | @tsv' "$CACHE_NODES"
+}
+
 # [功能] 添加隧道 (TUI 交互版)
 add_proxy() {
-    local nid=$(whiptail --inputbox "请输入节点 ID (可先在主菜单 NODE 查看):" 8 45 "" 3>&1 1>&2 2>&3)
+local NODE_LIST=()
+
+    # 读取为数组（核心！！！）
+    while IFS=$'\t' read -r id name; do
+        NODE_LIST+=("$id" "$name")
+    done < <(get_node_menu)
+
+    if [ ${#NODE_LIST[@]} -eq 0 ]; then
+        whiptail --msgbox "节点列表为空" 8 45
+        return
+    fi
+
+    nid=$(whiptail \
+        --title "选择节点" \
+        --menu "请选择一个节点" \
+        20 70 12 \
+        "${NODE_LIST[@]}" \
+        3>&1 1>&2 2>&3)
+
     [ -z "$nid" ] && return
     local name=$(whiptail --inputbox "隧道名称:" 8 45 "work" 3>&1 1>&2 2>&3)
     local type=$(whiptail --menu "协议类型" 15 45 6 "tcp" "TCP" "udp" "UDP" "http" "HTTP" "https" "HTTPS" 3>&1 1>&2 2>&3)
