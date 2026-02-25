@@ -75,7 +75,7 @@ get_node_menu() {
 
     # 2. 这里的输出不要重定向到 /dev/null，而是直接打印出来供外部捕获
     # 格式：ID 名称 (ID 是 Tag，名称是 Item)
-        jq -r '.data.list[] | [ .id, "\(.name) [\(.hostname)]" ] | @tsv' "$CACHE_NODES"
+        jq -r '.data.list[] | [ .id, "\(.name) [\(.comments)]" ] | @tsv' "$CACHE_NODES"
 }
 
 # [功能] 添加隧道 (TUI 交互版)
@@ -95,7 +95,7 @@ local NODE_LIST=()
     nid=$(whiptail \
         --title "选择节点" \
         --menu "请选择一个节点" \
-        20 70 12 \
+        25 95 17 \
         "${NODE_LIST[@]}" \
         3>&1 1>&2 2>&3)
 
@@ -105,7 +105,7 @@ local NODE_LIST=()
     local l_addr=$(whiptail --inputbox "本地地址:" 8 45 "127.0.0.1" 3>&1 1>&2 2>&3)
     local l_port=$(whiptail --inputbox "本地端口:" 8 45 "80" 3>&1 1>&2 2>&3)
     local r_port=$(whiptail --inputbox "远程端口 (0随机):" 8 45 "0" 3>&1 1>&2 2>&3)
-    if [ $r_port == 0 ] ; then
+    if [ $r_port = 0 ] ; then
     rand=$(( (RANDOM << 15 | RANDOM) % 65535 + 1 ))
 r_port=$rand
 fi
@@ -147,7 +147,7 @@ fi
 get_proxy_list() {
     # 修正点：将 proxy_type 改为 proxyType，将 proxy_name 改为 proxyName
     curl -s -X POST "$API_BASE/getUserProxies" -H "Authorization: $login" | \
-    jq -r '.data.list[] | "\(.id) \"[\(.proxyType)] \(.proxyName)\""' 2>/dev/null
+    jq -r '.data.list[] | "\(.id) [\(.proxyType)] \(.proxyName) \(.friendlyNode)"' 
 }
 
 # =========================
@@ -167,6 +167,7 @@ do
         "6.DEL"   "【删除】永久移除隧道" \
         "7.RUN"   "【启动】运行 frpc 客户端" \
         "8.RELOG" "【登录】重新获取授权/切换账号" \
+        "9.ABOUT" "【关于】关于这个程序"\
         "0.EXIT"  "【退出】安全关闭" 3>&1 1>&2 2>&3)
 
     case $CHOICE in
@@ -182,7 +183,7 @@ do
         if (.data.list | length) == 0 then 
             "暂无隧道数据" 
         else 
-            .data.list[] | "ID: \(.id)\n名称: \(.proxyName) [\(.proxyType)]\n节点: \(.nid) (\(.friendlyNode // "未知"))\n远程地址: \(.connectAddress // "无")\n本地配置: \(.localIp):\(.localPort)\n----------------------------------------" 
+            .data.list[] | "ID: \(.id)\n名称: \(.proxyName) [\(.proxyType)]\n节点: \(.nid) (\(.friendlyNode // "未知"))\n远程地址: \(.connectAddress // "无")\n本地配置: \(.localIp):\(.localPort)\n扩展地址:\(.extAddress//"无")\n----------------------------------------" 
         end')
     scroll_view "我的隧道详情" "$content"
     ;;
@@ -190,11 +191,20 @@ do
         "5.EDIT")
             list=$(get_proxy_list)
             if [ -z "$list" ]; then
-        whiptail --title "提示" --msgbox "当前账户下没有隧道，请先新建隧道后再执行删除操作。" 10 50
+        whiptail --title "提示" --msgbox "当前账户下没有隧道" 10 50
         continue
     fi
             nid=$()
-            pid=$(eval "whiptail --menu '选择修改项' 20 60 10 $list 3>&1 1>&2 2>&3")
+# 改进版：使用数组处理菜单项
+menu_options=()
+while read -r line; do
+    id=$(echo "$line" | awk '{print $1}')
+    label=$(echo "$line" | cut -d' ' -f2-)
+    menu_options+=("$id" "$label")
+done <<< "$list"
+
+# 调用时使用 "${menu_options[@]}"
+pid=$(whiptail --title "选择编辑隧道" --menu "请选择要编辑的隧道" 20 60 10 "${menu_options[@]}" 3>&1 1>&2 2>&3)
             [ -n "$pid" ] && {
                 nid=$(curl -s -X POST "https://api.openfrp.net/frp/api/getUserProxies" -H "Authorization: $login " | sed -n 's/.*"nid":[[:space:]]*\([0-9]\+\).*/\1/p')
                 type=$(curl -s -X POST "https://api.openfrp.net/frp/api/getUserProxies" -H "Authorization: $login " | sed -n 's/.*"proxyType":[[:space:]]*"\([^"]*\)".*/\1/p')
@@ -228,21 +238,42 @@ fi
             } ;;
         "6.DEL")
             list=$(get_proxy_list)
-if [ -z "$list" ]; then
-        whiptail --title "提示" --msgbox "当前账户下没有隧道，请先新建隧道后再执行删除操作。" 10 50
+
+    # 检查是否有隧道
+    if [ -z "$list" ]; then
+        whiptail --title "提示" --msgbox "当前账户下没有隧道" 10 50 10
         continue
     fi
-            [ -n "$list" ] && {
-                pid=$(eval "whiptail --menu '选择删除项' 20 60 10 $list 3>&1 1>&2 2>&3")
-                [ -n "$pid" ] && whiptail --yesno "确定要删除 ID $pid 吗?" 8 45 && {
-                    resp=$(curl -s -X POST "$API_BASE/removeProxy" -H "Authorization: $login" -H "Content-Type: application/json" -d "{\"proxy_id\":$pid}")
-                    show_api_msg "$resp"
-                }
-            } ;;
+
+# 改进版：使用数组处理菜单项
+menu_options=()
+while read -r line; do
+    id=$(echo "$line" | awk '{print $1}')
+    label=$(echo "$line" | cut -d' ' -f2-)
+    menu_options+=("$id" "$label")
+done <<< "$list"
+
+# 调用时使用 "${menu_options[@]}"
+pid=$(whiptail --title "选择删除隧道" --menu "请选择要删除的隧道" 20 60 10 "${menu_options[@]}" 3>&1 1>&2 2>&3)
+
+    # 如果用户选择了项
+    if [ -n "$pid" ]; then
+        # 弹出确认框
+        if whiptail --title "确认删除" --yesno "确定要删除 ID $pid 吗?" 8 45 10; then
+            # 调用 API 删除隧道
+            del_resp=$(curl -s -X POST "$API_BASE/removeProxy" \
+                -H "Authorization: $login" \
+                -H "Content-Type: application/json" \
+                -d "{\"proxy_id\":$pid}")
+            
+            # 显示 API 响应
+            show_api_msg "$del_resp"
+        fi
+    fi;;
         "7.RUN")
             list=$(get_proxy_list)
 if [ -z "$list" ]; then
-        whiptail --title "提示" --msgbox "当前账户下没有隧道，请先新建隧道后再执行删除操作。" 10 50
+        whiptail --title "提示" --msgbox "当前账户下没有隧道" 10 50 10
         continue
     fi
     latest=$(curl -s -X GET 'https://api.openfrp.net/commonQuery/get?key=software' | jq -r .data.latest_full)
@@ -264,13 +295,23 @@ else
     tar -xvf frpc.tar.gz
 fi
             [ -n "$list" ] && {
-                pid=$(eval "whiptail --menu '运行隧道' 20 60 10 $list 3>&1 1>&2 2>&3")
+# 改进版：使用数组处理菜单项
+menu_options=()
+while read -r line; do
+    id=$(echo "$line" | awk '{print $1}')
+    label=$(echo "$line" | cut -d' ' -f2-)
+    menu_options+=("$id" "$label")
+done <<< "$list"
+
+# 调用时使用 "${menu_options[@]}"
+pid=$(whiptail --title "选择启动隧道" --menu "请选择要启动的隧道" 20 60 10 "${menu_options[@]}" 3>&1 1>&2 2>&3)
                 [ -n "$pid" ] && {
                     token=$(curl -s -X POST "$API_BASE/getUserInfo" -H "Authorization: $login" | jq -r '.data.token')
                     clear && ./frpc_linux_amd64 -u "$token" -p "$pid" -n && read -p "已断开，回车返回菜单..." temp
                 }
             } ;;
         "8.RELOG") rm -f "$AUTH_FILE" && check_auth ;;
+        "9.ABOUT") whiptail --title "关于" --msgbox "Openfrp4Bash\nVer0.02\n此项目由社区开发，"OpenFrp"官方不负责除节点问题以外的技术支持\n此项目没有支持\n修BUG自己修" 12 65 15 ;;
         "0.EXIT" | "") exit 0 ;;
     esac
 done
