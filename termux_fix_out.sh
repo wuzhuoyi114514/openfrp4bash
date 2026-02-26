@@ -16,4 +16,4 @@ pkg install ca-certificates
 update-ca-certificates
 
 #依赖补全
-pkg install curl jq whiptail -y
+pkg install wget curl jq whiptail -y
