@@ -6,7 +6,7 @@ echo " / _ \| '_ \ / _ \ '_ \| |_| '__| '_ \ "
 echo '| (_) | |_) |  __/ | | |  _| |  | |_) |'
 echo ' \___/| .__/ \___|_| |_|_| |_|  | .__/ '
 echo '      |_|                       |_|    '
-echo 'openfrp helpful program TUI     version 0.02 for x86_64'
+echo 'openfrp helpful program TUI     version 0.02'
 
 echo "等待启动..."
 #架构处理
