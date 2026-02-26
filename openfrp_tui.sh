@@ -304,7 +304,7 @@ if [ -z "$list" ]; then
     latest=$(curl -s -X GET 'https://api.openfrp.net/commonQuery/get?key=software' | jq -r .data.latest_full)
 if [ -e frpc_linux_amd64 ]; then
     echo 进行检查更新
-    frpc_ver=$(./frpc_linux_amd64 -v)
+    frpc_ver=$(./frpc_linux_$machine -v)
    if [ $frpc_ver == $latest ]
 then
 echo 版本是最新的

@@ -8,3 +8,12 @@ export SODIUM_INSTALL=system
 
 # 执行安装
 pip install pynacl
+
+# 2. 安装/重装证书包
+pkg install ca-certificates
+
+# 3. 手动触发证书更新（可选，但建议执行）
+update-ca-certificates
+
+#依赖补全
+pkg install curl jq whiptail -y
