@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#/bin/bash
 echo '                         __            '
 echo '  ___  _ __   ___ _ __  / _|_ __ _ __  '
 echo " / _ \| '_ \ / _ \ '_ \| |_| '__| '_ \ "
@@ -10,7 +9,17 @@ echo '      |_|                       |_|    '
 echo 'openfrp helpful program TUI     version 0.02 for x86_64'
 
 echo "等待启动..."
-sleep 0.5
+#架构处理
+machine=$(uname -m)
+if [ $machine = x86_64 ]
+then
+machine=amd64
+elif [ $machine = aarch64 ]
+then
+machine=arm64
+else whiptail --msgbox "Openfrp 的Frpc不支持此架构,启动功能禁用" 8 45
+machine=unknown
+fi
 
 # =========================
 # 1. 基础配置与环境修复
@@ -282,6 +291,11 @@ pid=$(whiptail --title "选择删除隧道" --menu "请选择要删除的隧道"
         fi
     fi;;
         "7.RUN")
+            if [ $machine = unknown ]
+           then
+        whiptail --title "提示" --msgbox "未知架构" 10 50 10
+       continue
+fi
             list=$(get_proxy_list)
 if [ -z "$list" ]; then
         whiptail --title "提示" --msgbox "当前账户下没有隧道" 10 50 10
@@ -296,13 +310,13 @@ then
 echo 版本是最新的
 else
 echo 版本不是最新的 更新中...
-   wget -O frpc.tar.gz -q https://staticassets.naids.com/client/$latest/frpc_linux_amd64.tar.gz
+   wget -O frpc.tar.gz -q https://staticassets.naids.com/client/$latest/frpc_linux_$machine.tar.gz
     tar -xvf frpc.tar.gz
 fi
 else
     echo "你必须下载openfrp的frpc客户端才可以启动"
     echo "现在下载...."
-    wget -O frpc.tar.gz -q https://staticassets.naids.com/client/$latest/frpc_linux_amd64.tar.gz
+    wget -O frpc.tar.gz -q https://staticassets.naids.com/client/$latest/frpc_linux_$machine.tar.gz
     tar -xvf frpc.tar.gz
 fi
             [ -n "$list" ] && {
