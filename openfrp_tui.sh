@@ -28,10 +28,10 @@ fi
 # 1. 自动修正 TMPDIR
 # Termux fuck you !! android fuck you!
 TMPDIR="/tmp"
-termux="no"
+termux=0
     # 如果是 Termux，就把临时文件丢到它的专属目录
     if [ -d "/data/data/com.termux/files/usr" ]; then
-      termux="yes"
+      termux=1
         export TMPDIR="/data/data/com.termux/files/usr/tmp"
     fi
 AUTH_FILE=".authorization"
@@ -343,7 +343,7 @@ pid=$(whiptail --title "选择启动隧道" --menu "请选择要启动的隧道"
                 [ -n "$pid" ] && {
                     token=$(curl -s -X POST "$API_BASE/getUserInfo" -H "Authorization: $login" | jq -r '.data.token')
                 #傻逼termux证书校验你妈过不了啊啊啊啊啊啊啊啊
-                if [ $termux = yes];then
+                if [ $termux = 1 ];then
                      clear && ./frpc_linux_$machine --skip-api-verify -u "$token" -p "$pid" -n && read -p "已断开，回车返回菜单..." temp
                    else
                     clear && ./frpc_linux_$machine -u "$token" -p "$pid" -n && read -p "已断开，回车返回菜单..." temp
