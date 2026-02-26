@@ -194,6 +194,7 @@ get_proxy_list() {
 # =========================
 check_env
 check_auth
+check_login_state
 
 while :
 do
