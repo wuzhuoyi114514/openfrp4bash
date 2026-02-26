@@ -1,5 +1,5 @@
 # 更新源并升级包
-pkg update && pkg upgrade
+pkg update -y && pkg upgrade -y
 
 # 安装 Python 和 编译工具链
 pkg install -y python clang make pkg-config libsodium
