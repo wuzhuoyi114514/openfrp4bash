@@ -24,10 +24,16 @@ fi
 # =========================
 # 1. 基础配置与环境修复
 # =========================
+
+# 1. 自动修正 TMPDIR
+TMPDIR="/tmp/"
+if [ -d "/data/data/com.termux/files/usr" ]; then
+TMPDIR="${TMPDIR:-/data/data/com.termux/files/usr/tmp}"
+[ ! -d "$TMPDIR" ] && mkdir -p "$TMPDIR"
 AUTH_FILE=".authorization"
 API_BASE="https://api.openfrp.net/frp/api"
-TMP_DATA="/tmp/of_scroll.txt"
-CACHE_NODES="/tmp/of_nodes.json"
+TMP_DATA="$TMPDIR/of_scroll.txt"
+CACHE_NODES="$TMPDIR/of_nodes.json"
 
 # 解决 TUI 渲染与颜色
 export TERM=xterm
