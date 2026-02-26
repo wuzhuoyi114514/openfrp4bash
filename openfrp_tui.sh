@@ -44,7 +44,7 @@ export TERM=xterm
 export NEWT_COLORS='root=,blue window=,lightgray border=black,lightgray button=white,red'
 
 check_env() {
-    for cmd in jq curl whiptail; do
+    for cmd in wget jq curl whiptail; do
         command -v $cmd &> /dev/null || { echo "缺失组件: $cmd"; exit 1; }
     done
 }
@@ -54,6 +54,15 @@ check_auth() {
         [ -f "oflogin.sh" ] && bash oflogin.sh || { whiptail --msgbox "未登录且缺失 oflogin.sh" 8 45; exit 1; }
     }
     login=$(cat "$AUTH_FILE" | tr -d '\n\r ')
+}
+
+check_login_state(){
+      test_login=$(curl -s -X POST "$API_BASE/getUserInfo" -H "Authorization: $login" | jq -r .flag )
+    if [ $test_login = false ];then
+whiptail --msgbox "登录无效! 请重新登录" 8 45
+      rm -f .authorization
+      check_auth
+    fi
 }
 
 show_api_msg() {
@@ -201,12 +210,16 @@ do
         "0.EXIT"  "【退出】安全关闭" 3>&1 1>&2 2>&3)
 
     case $CHOICE in
-        "1.INFO") show_full_info ;;
-        "2.NODE") 
+        "1.INFO") 
+          check_login_state
+          show_full_info ;;
+        "2.NODE")
+          check_login_state
             resp=$(curl -s -X POST "$API_BASE/getNodeList" -H "Authorization: $login")
             content=$(echo "$resp" | jq -r '.data.list[] | "[\(.id)] \(.name)\n地址: \(.hostname)\n描述: \(.comments)\n----------------------------------------"')
             scroll_view "节点列表 (使用方向键翻页)" "$content" ;;
         "3.MY")
+          check_login_state
     resp=$(curl -s -X POST "$API_BASE/getUserProxies" -H "Authorization: $login")
     # 修正字段名：proxyName, proxyType, nid, remotePort, localIp, localPort
     content=$(echo "$resp" | jq -r '
@@ -217,8 +230,11 @@ do
         end')
     scroll_view "我的隧道详情" "$content"
     ;;
-        "4.ADD") add_proxy ;;
+        "4.ADD")
+          check_login_state
+          add_proxy ;;
         "5.EDIT")
+          check_login_state
             list=$(get_proxy_list)
             if [ -z "$list" ]; then
         whiptail --title "提示" --msgbox "当前账户下没有隧道" 10 50
@@ -267,6 +283,7 @@ fi
                 show_api_msg "$resp"
             } ;;
         "6.DEL")
+          check_login_state
             list=$(get_proxy_list)
 
     # 检查是否有隧道
@@ -301,6 +318,7 @@ pid=$(whiptail --title "选择删除隧道" --menu "请选择要删除的隧道"
         fi
     fi;;
         "7.RUN")
+          check_login_state
             if [ $machine = unknown ]
            then
         whiptail --title "提示" --msgbox "未知架构" 10 50 10
@@ -327,7 +345,7 @@ else
     echo "你必须下载openfrp的frpc客户端才可以启动"
     echo "现在下载...."
     wget -O frpc.tar.gz -q https://staticassets.naids.com/client/$latest/frpc_linux_$machine.tar.gz
-    tar -xvf frpc.tar.gz
+    tar -xf frpc.tar.gz
 fi
             [ -n "$list" ] && {
 # 改进版：使用数组处理菜单项
