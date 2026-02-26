@@ -12,8 +12,10 @@ pip install pynacl
 # 2. 安装/重装证书包
 pkg install ca-certificates
 
-# 3. 手动触发证书更新（可选，但建议执行）
-update-ca-certificates
+# 3. frpc关闭证书校验(可能吧)
+export GODEBUG=x509ignoreCN=0
+# 或者针对某些环境
+export GIT_SSL_NO_VERIFY=true
 
 #依赖补全
 pkg install wget curl jq whiptail -y

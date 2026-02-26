@@ -26,9 +26,12 @@ fi
 # =========================
 
 # 1. 自动修正 TMPDIR
+# Termux fuck you !! android fuck you!
 TMPDIR="/tmp"
+termux="no"
     # 如果是 Termux，就把临时文件丢到它的专属目录
     if [ -d "/data/data/com.termux/files/usr" ]; then
+      termux="yes"
         export TMPDIR="/data/data/com.termux/files/usr/tmp"
     fi
 AUTH_FILE=".authorization"
@@ -309,7 +312,7 @@ if [ -z "$list" ]; then
         continue
     fi
     latest=$(curl -s -X GET 'https://api.openfrp.net/commonQuery/get?key=software' | jq -r .data.latest_full)
-if [ -e frpc_linux_amd64 ]; then
+if [ -e frpc_linux_$machine ]; then
     echo 进行检查更新
     frpc_ver=$(./frpc_linux_$machine -v)
    if [ $frpc_ver == $latest ]
@@ -339,7 +342,12 @@ done <<< "$list"
 pid=$(whiptail --title "选择启动隧道" --menu "请选择要启动的隧道" 20 60 10 "${menu_options[@]}" 3>&1 1>&2 2>&3)
                 [ -n "$pid" ] && {
                     token=$(curl -s -X POST "$API_BASE/getUserInfo" -H "Authorization: $login" | jq -r '.data.token')
+                #傻逼termux证书校验你妈过不了啊啊啊啊啊啊啊啊
+                if [ $termux = yes];then
+                     clear && ./frpc_linux_$machine --skip-api-verify -u "$token" -p "$pid" -n && read -p "已断开，回车返回菜单..." temp
+                   else
                     clear && ./frpc_linux_$machine -u "$token" -p "$pid" -n && read -p "已断开，回车返回菜单..." temp
+                fi
                 }
             } ;;
         "8.RELOG") rm -f "$AUTH_FILE" && check_auth ;;
