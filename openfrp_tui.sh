@@ -29,7 +29,7 @@ fi
 TMPDIR="/tmp/"
 if [ -d "/data/data/com.termux/files/usr" ]; then
 TMPDIR="${TMPDIR:-/data/data/com.termux/files/usr/tmp}"
-[ ! -d "$TMPDIR" ] && mkdir -p "$TMPDIR"
+if [ ! -d "$TMPDIR" ] && mkdir -p "$TMPDIR"
 AUTH_FILE=".authorization"
 API_BASE="https://api.openfrp.net/frp/api"
 TMP_DATA="$TMPDIR/of_scroll.txt"
