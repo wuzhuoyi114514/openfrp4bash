@@ -332,7 +332,7 @@ done <<< "$list"
 pid=$(whiptail --title "选择启动隧道" --menu "请选择要启动的隧道" 20 60 10 "${menu_options[@]}" 3>&1 1>&2 2>&3)
                 [ -n "$pid" ] && {
                     token=$(curl -s -X POST "$API_BASE/getUserInfo" -H "Authorization: $login" | jq -r '.data.token')
-                    clear && ./frpc_linux_amd64 -u "$token" -p "$pid" -n && read -p "已断开，回车返回菜单..." temp
+                    clear && ./frpc_linux_$machine -u "$token" -p "$pid" -n && read -p "已断开，回车返回菜单..." temp
                 }
             } ;;
         "8.RELOG") rm -f "$AUTH_FILE" && check_auth ;;
