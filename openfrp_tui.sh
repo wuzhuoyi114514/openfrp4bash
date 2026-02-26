@@ -10,7 +10,7 @@ echo 'openfrp helpful program TUI     version 0.02'
 
 echo "等待启动..."
 #架构处理
-machine=$(uname -m)
+machine=$(command uname -m)
 if [ $machine = x86_64 ]
 then
 machine=amd64
