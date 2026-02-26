@@ -7,7 +7,6 @@ AUTH_FILE=".authorization"
 API_BASE="https://api.openfrp.net/frp/api"
 TMP_DATA="/tmp/of_scroll.txt"
 CACHE_NODES="/tmp/of_nodes.json"
-CACHE_PROXIES="/tmp/of_proxies.json"
 
 # 解决 TUI 渲染与颜色
 export TERM=xterm
@@ -75,7 +74,7 @@ get_node_menu() {
 
     # 2. 这里的输出不要重定向到 /dev/null，而是直接打印出来供外部捕获
     # 格式：ID 名称 (ID 是 Tag，名称是 Item)
-        jq -r '.data.list[] | [ .id, "\(.name) [\(.comments)]" ] | @tsv' "$CACHE_NODES"
+        jq -r '.data.list[] | [ .id, "[\(.group)] \(.name) [\(.comments)]" ] | @tsv' "$CACHE_NODES"
 }
 
 # [功能] 添加隧道 (TUI 交互版)
@@ -95,7 +94,7 @@ local NODE_LIST=()
     nid=$(whiptail \
         --title "选择节点" \
         --menu "请选择一个节点" \
-        25 95 17 \
+        25 115 17 \
         "${NODE_LIST[@]}" \
         3>&1 1>&2 2>&3)
 
@@ -312,6 +311,6 @@ pid=$(whiptail --title "选择启动隧道" --menu "请选择要启动的隧道"
             } ;;
         "8.RELOG") rm -f "$AUTH_FILE" && check_auth ;;
         "9.ABOUT") whiptail --title "关于" --msgbox "Openfrp4Bash\nVer0.02\n此项目由社区开发，"OpenFrp"官方不负责除节点问题以外的技术支持\n此项目没有支持\n修BUG自己修" 12 65 15 ;;
-        "0.EXIT" | "") exit 0 ;;
+        "0.EXIT" | "") rm -f $CACHE_NODES && exit 0 ;;
     esac
 done
