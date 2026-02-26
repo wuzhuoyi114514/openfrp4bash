@@ -26,10 +26,11 @@ fi
 # =========================
 
 # 1. 自动修正 TMPDIR
-TMPDIR="/tmp/"
-if [ -d "/data/data/com.termux/files/usr" ]; then
-TMPDIR="${TMPDIR:-/data/data/com.termux/files/usr/tmp}"
-if [ ! -d "$TMPDIR" ] && mkdir -p "$TMPDIR"
+TMPDIR="/tmp"
+    # 如果是 Termux，就把临时文件丢到它的专属目录
+    if [ -d "/data/data/com.termux/files/usr" ]; then
+        export TMPDIR="/data/data/com.termux/files/usr/tmp"
+    fi
 AUTH_FILE=".authorization"
 API_BASE="https://api.openfrp.net/frp/api"
 TMP_DATA="$TMPDIR/of_scroll.txt"
