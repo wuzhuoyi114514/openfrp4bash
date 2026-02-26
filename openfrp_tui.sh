@@ -10,6 +10,7 @@ echo 'openfrp helpful program TUI     version 0.02'
 
 echo "等待启动..."
 #架构处理
+unset machine
 machine=$(command uname -m)
 if [ $machine = x86_64 ]
 then
@@ -114,7 +115,18 @@ get_node_menu() {
 
     # 2. 这里的输出不要重定向到 /dev/null，而是直接打印出来供外部捕获
     # 格式：ID 名称 (ID 是 Tag，名称是 Item)
-        jq -r '.data.list[] | [ .id, "[\(.group)] \(.name) [\(.comments)]" ] | @tsv' "$CACHE_NODES"
+        jq -r '.data.list[]? | 
+select(type == "object") | 
+[
+  .id,
+  "[\(
+    ((.group // "") | split(";")) as $g |
+    if ($g | any(. == "normal")) then "免费"
+    elif ($g | any(. == "vip")) then "VIP"
+    elif ($g | any(. == "svip")) then "SVIP"
+    else "不对外" end
+  )] \(.name) [\(.comments)]"
+] | @tsv' "$CACHE_NODES"
 }
 
 # [功能] 添加隧道 (TUI 交互版)
