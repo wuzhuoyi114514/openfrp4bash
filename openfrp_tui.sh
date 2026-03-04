@@ -375,9 +375,9 @@ pid=$(whiptail --title "选择启动隧道" --menu "请选择要启动的隧道"
                     token=$(curl -s -X POST "$API_BASE/getUserInfo" -H "Authorization: $login" | jq -r '.data.token')
                 #傻逼termux证书校验你妈过不了啊啊啊啊啊啊啊啊
                 if [ $termux = 1 ];then
-                     clear && ./frpc_linux_$machine --skip-api-verify -u "$token" -p "$pid" -n && read -p "已断开，回车返回菜单..." temp
+                     clear && ./frpc_linux_$machine --skip-api-verify -u "$token" -p "$pid" && read -p "已断开，回车返回菜单..." temp
                    else
-                    clear && ./frpc_linux_$machine -u "$token" -p "$pid" -n && read -p "已断开，回车返回菜单..." temp
+                    clear && ./frpc_linux_$machine -u "$token" -p "$pid" && read -p "已断开，回车返回菜单..." temp
                 fi
                 }
             } ;;
